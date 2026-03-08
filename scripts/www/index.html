@@ -2,855 +2,266 @@
 <html lang="zh">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>插座数据监测</title>
-    <!-- ECharts 用于图表 -->
+    <!-- 引入外部样式和脚本 -->
+    <link rel="stylesheet" href="css/index.css">
     <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
-    <style>
-        * {
-            box-sizing: border-box;
-            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-        }
-        body {
-            background: #f5f7fa;
-            margin: 0;
-            padding: 16px;
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-        }
-        .container {
-            max-width: 500px;
-            width: 100%;
-            background: white;
-            border-radius: 24px;
-            padding: 24px 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
-        }
-        h1 {
-            font-size: 26px;
-            font-weight: 600;
-            color: #1e293b;
-            margin: 0 0 16px 0;
-            text-align: center;
-        }
-        .sensor-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 16px;
-            margin-bottom: 24px;
-        }
-        .sensor-item {
-            background: #f8fafc;
-            border-radius: 20px;
-            padding: 16px 14px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
-        }
-        .sensor-label {
-            font-size: 14px;
-            color: #64748b;
-            margin-bottom: 8px;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-        .sensor-value {
-            font-size: 28px;
-            font-weight: 600;
-            color: #0f172a;
-            line-height: 1.2;
-        }
-        .sensor-unit {
-            font-size: 14px;
-            font-weight: 400;
-            color: #94a3b8;
-            margin-left: 4px;
-        }
-        .switch-container {
-            background: #f8fafc;
-            border-radius: 20px;
-            padding: 20px;
-            margin-bottom: 24px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-        .switch-label {
-            font-weight: 500;
-            color: #1e293b;
-            font-size: 16px;
-        }
-        .switch-btn {
-            width: 64px;
-            height: 34px;
-            border-radius: 34px;
-            background: #cbd5e1;
-            border: none;
-            position: relative;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-        .switch-btn.on {
-            background: #3b82f6;
-        }
-        .switch-btn::after {
-            content: '';
-            position: absolute;
-            width: 30px;
-            height: 30px;
-            background: white;
-            border-radius: 50%;
-            top: 2px;
-            left: 2px;
-            transition: left 0.2s;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        .switch-btn.on::after {
-            left: 32px;
-        }
-        .switch-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-        .threshold-card {
-            background: #f8fafc;
-            border-radius: 20px;
-            padding: 20px;
-            margin-bottom: 24px;
-        }
-        .threshold-title {
-            font-weight: 500;
-            color: #1e293b;
-            font-size: 16px;
-            margin-bottom: 16px;
-        }
-        .threshold-item {
-            background: white;
-            border-radius: 18px;
-            padding: 16px 18px;
-            margin-bottom: 16px;
-        }
-        .threshold-item:last-child {
-            margin-bottom: 0;
-        }
-        .threshold-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 12px;
-        }
-        .threshold-name {
-            font-weight: 500;
-            color: #334155;
-        }
-        .threshold-value-display {
-            font-size: 18px;
-            font-weight: 600;
-            color: #0f172a;
-        }
-        .threshold-unit {
-            font-size: 14px;
-            color: #94a3b8;
-            margin-left: 4px;
-        }
-        .slider {
-            width: 100%;
-            margin: 12px 0;
-            accent-color: #3b82f6;
-        }
-        .input-group {
-            display: flex;
-            gap: 8px;
-        }
-        .input-group input {
-            flex: 1;
-            padding: 10px 16px;
-            border: 1px solid #e2e8f0;
-            border-radius: 30px;
-            font-size: 14px;
-            background: #f1f5f9;
-            outline: none;
-        }
-        .input-group button {
-            background: #3b82f6;
-            color: white;
-            border: none;
-            border-radius: 30px;
-            padding: 0 20px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: 0.1s;
-        }
-        .input-group button:active {
-            background: #2563eb;
-        }
-        .input-group button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-        .history-card {
-            background: #f8fafc;
-            border-radius: 20px;
-            padding: 20px;
-            margin-bottom: 24px;
-        }
-        .history-title {
-            font-weight: 500;
-            color: #1e293b;
-            font-size: 16px;
-            margin-bottom: 16px;
-        }
-        .history-btn-group {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            margin-bottom: 16px;
-        }
-        .history-attr-btn {
-            flex: 1 0 auto;
-            background: #e2e8f0;
-            border: none;
-            border-radius: 30px;
-            padding: 8px 0;
-            font-weight: 500;
-            font-size: 14px;
-            color: #1e293b;
-            cursor: pointer;
-            transition: all 0.1s;
-            min-width: 60px;
-            text-align: center;
-        }
-        .history-attr-btn.active {
-            background: #3b82f6;
-            color: white;
-        }
-        .history-attr-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-        .peak-info {
-            background: white;
-            border-radius: 18px;
-            padding: 12px 16px;
-            margin-bottom: 16px;
-            font-size: 14px;
-            color: #334155;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-        .peak-info span {
-            font-weight: 600;
-            color: #3b82f6;
-        }
-        #historyChart {
-            width: 100%;
-            height: 220px;
-            background: white;
-            border-radius: 16px;
-            padding: 8px;
-        }
-        .footer-note {
-            margin-top: 16px;
-            text-align: center;
-            font-size: 13px;
-            color: #94a3b8;
-        }
-        .error-msg {
-            color: #b91c1c;
-            background: #fee2e2;
-            padding: 10px;
-            border-radius: 30px;
-            font-size: 14px;
-            text-align: center;
-            margin: 10px 0;
-            display: none;
-        }
-        .loading {
-            text-align: center;
-            color: #64748b;
-            padding: 10px;
-        }
-    </style>
 </head>
 <body>
-<div class="container">
-    <h1>🔌 插座数据监测</h1>
+    <!-- 顶部导航 -->
+    <header class="header">
+        <h1>插座数据监测系统</h1>
+        <div class="time-badge" id="currentTime"></div>
+    </header>
 
-    <!-- 实时数据卡片（新增用电量） -->
-    <div class="sensor-grid">
-        <div class="sensor-item">
-            <div class="sensor-label">⚡ 电压</div>
-            <div><span class="sensor-value" id="voltage">--</span><span class="sensor-unit">V</span></div>
+    <!-- 主容器 -->
+    <div class="container">
+        <!-- 左侧主内容区 -->
+        <div class="main-content">
+            <!-- 实时数据卡片 -->
+            <div class="card">
+                <div class="card-title">实时监测数据</div>
+                <div class="sensor-grid">
+                    <div class="sensor-item">
+                        <div class="sensor-label">⚡ 电压</div>
+                        <div><span class="sensor-value" id="voltage">--</span><span class="sensor-unit">V</span></div>
+                    </div>
+                    <div class="sensor-item">
+                        <div class="sensor-label">🔌 电流</div>
+                        <div><span class="sensor-value" id="current">--</span><span class="sensor-unit">mA</span></div>
+                    </div>
+                    <div class="sensor-item">
+                        <div class="sensor-label">💡 功率</div>
+                        <div><span class="sensor-value" id="power">--</span><span class="sensor-unit">W</span></div>
+                    </div>
+                    <div class="sensor-item">
+                        <div class="sensor-label">🌡️ 温度</div>
+                        <div><span class="sensor-value" id="tem">--</span><span class="sensor-unit">°C</span></div>
+                    </div>
+                    <div class="sensor-item">
+                        <div class="sensor-label">💧 湿度</div>
+                        <div><span class="sensor-value" id="humi">--</span><span class="sensor-unit">%RH</span></div>
+                    </div>
+                    <div class="sensor-item">
+                        <div class="sensor-label">🔋 累计用电</div>
+                        <div><span class="sensor-value" id="total_energy">--</span><span class="sensor-unit">kWh</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 设备控制区 -->
+            <div class="card">
+                <div class="card-title">设备控制</div>
+                <div class="device-controls">
+                    <div class="switch-container">
+                        <span class="switch-label">插座开关</span>
+                        <button class="switch-btn" id="socketSwitch" onclick="toggleSocket()"></button>
+                    </div>
+                    <div class="switch-container">
+                        <span class="switch-label">自动模式</span>
+                        <button class="switch-btn" id="autoPriceSwitch" onclick="toggleAutoPrice()"></button>
+                    </div>
+                    <!-- 新增省电开关 -->
+                    <div class="switch-container">
+                        <span class="switch-label">省电模式</span>
+                        <button class="switch-btn" id="lowPowerSwitch" onclick="toggleLowPower()"></button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 历史数据区 -->
+            <div class="card">
+                <div class="card-title">历史数据记录</div>
+                <div class="history-controls">
+                    <!-- 保留24小时和7天快捷按钮 -->
+                    <div class="history-time-group" id="historyTimeGroup">
+                        <button class="history-time-btn active" data-days="1">24小时</button>
+                        <button class="history-time-btn" data-days="7">7天</button>
+                    </div>
+                    <!-- 新增自定义时间范围输入框 -->
+                    <div class="custom-time-group">
+                        <input type="datetime-local" id="startTimeInput" class="time-input" placeholder="开始时间">
+                        <input type="datetime-local" id="endTimeInput" class="time-input" placeholder="结束时间">
+                        <button class="confirm-btn" onclick="queryCustomTimeData()">确定</button>
+                    </div>
+                    <div class="history-btn-group" id="historyAttrGroup">
+                        <button class="history-attr-btn active" data-attr="voltage">电压</button>
+                        <button class="history-attr-btn" data-attr="current">电流</button>
+                        <button class="history-attr-btn" data-attr="power">功率</button>
+                        <button class="history-attr-btn" data-attr="tem">温度</button>
+                        <button class="history-attr-btn" data-attr="humi">湿度</button>
+                        <button class="history-attr-btn" data-attr="total_energy">累计用电</button>
+                    </div>
+                </div>
+                
+                <div class="peak-info" id="peakInfo">
+                    <span>📈 峰值:</span> 
+                    <span id="peakValue">--</span> 
+                    <span id="peakUnit"></span> 
+                    出现在 <span id="peakTime">--</span>
+                </div>
+                
+                <div id="historyChart"></div>
+                <div id="historyLoading" class="loading" style="display: none;">加载中...</div>
+            </div>
+
+            <div id="errorMsg" class="error-msg"></div>
+            
+            <div class="footer-note">
+                数据来自OneNET · 实时刷新 | © 2026 智能插座监测系统
+            </div>
         </div>
-        <div class="sensor-item">
-            <div class="sensor-label">🔌 电流</div>
-            <div><span class="sensor-value" id="current">--</span><span class="sensor-unit">A</span></div>
-        </div>
-        <div class="sensor-item">
-            <div class="sensor-label">💡 功率</div>
-            <div><span class="sensor-value" id="power">--</span><span class="sensor-unit">W</span></div>
-        </div>
-        <div class="sensor-item">
-            <div class="sensor-label">🌡️ 温度</div>
-            <div><span class="sensor-value" id="tem">--</span><span class="sensor-unit">℃</span></div>
-        </div>
-        <div class="sensor-item">
-            <div class="sensor-label">💧 湿度</div>
-            <div><span class="sensor-value" id="humi">--</span><span class="sensor-unit">%</span></div>
-        </div>
-        <!-- 新增用电量卡片 -->
-        <div class="sensor-item">
-            <div class="sensor-label">🔋 用电量</div>
-            <div><span class="sensor-value" id="totalEnergy">--</span><span class="sensor-unit">kWh</span></div>
+
+        <!-- 右侧辅助区（阈值设置） -->
+        <div class="sidebar">
+            <div class="card">
+                <div class="card-title">阈值参数设置</div>
+                
+                <!-- 电压阈值 -->
+                <div class="threshold-item">
+                    <div class="threshold-header">
+                        <span class="threshold-name">电压阈值</span>
+                        <span>
+                            <span class="threshold-value-display" id="voltageMaxDisplay">250</span>
+                            <span class="threshold-unit">V</span>
+                        </span>
+                    </div>
+                    <div class="slider-with-steps">
+                        <button class="step-btn" onclick="decrementVoltageMax()">-</button>
+                        <input type="range" class="slider" id="voltageMaxSlider" min="0" max="500" step="0.1" value="250" oninput="syncVoltageMaxFromSlider()">
+                        <button class="step-btn" onclick="incrementVoltageMax()">+</button>
+                    </div>
+                    <div class="input-group">
+                        <input type="number" id="voltageMaxInput" min="0" max="500" step="0.1" value="250" oninput="syncVoltageMaxFromInput()">
+                        <button id="voltageMaxSetBtn" onclick="setVoltageMax()">设置</button>
+                    </div>
+                </div>
+
+                <!-- 电流阈值 -->
+                <div class="threshold-item">
+                    <div class="threshold-header">
+                        <span class="threshold-name">电流阈值</span>
+                        <span>
+                            <span class="threshold-value-display" id="currentMaxDisplay">5000</span>
+                            <span class="threshold-unit">mA</span>
+                        </span>
+                    </div>
+                    <div class="slider-with-steps">
+                        <button class="step-btn" onclick="decrementCurrentMax()">-</button>
+                        <input type="range" class="slider" id="currentMaxSlider" min="0" max="50000" step="1" value="5000" oninput="syncCurrentMaxFromSlider()">
+                        <button class="step-btn" onclick="incrementCurrentMax()">+</button>
+                    </div>
+                    <div class="input-group">
+                        <input type="number" id="currentMaxInput" min="0" max="50000" step="1" value="5000" oninput="syncCurrentMaxFromInput()">
+                        <button id="currentMaxSetBtn" onclick="setCurrentMax()">设置</button>
+                    </div>
+                </div>
+
+                <!-- 功率阈值 -->
+                <div class="threshold-item">
+                    <div class="threshold-header">
+                        <span class="threshold-name">功率阈值</span>
+                        <span>
+                            <span class="threshold-value-display" id="powerMaxDisplay">600</span>
+                            <span class="threshold-unit">W</span>
+                        </span>
+                    </div>
+                    <div class="slider-with-steps">
+                        <button class="step-btn" onclick="decrementPowerMax()">-</button>
+                        <input type="range" class="slider" id="powerMaxSlider" min="0" max="5000" step="0.1" value="600" oninput="syncPowerMaxFromSlider()">
+                        <button class="step-btn" onclick="incrementPowerMax()">+</button>
+                    </div>
+                    <div class="input-group">
+                        <input type="number" id="powerMaxInput" min="0" max="5000" step="0.1" value="600" oninput="syncPowerMaxFromInput()">
+                        <button id="powerMaxSetBtn" onclick="setPowerMax()">设置</button>
+                    </div>
+                </div>
+
+                <!-- 电价设置 -->
+                <div class="threshold-item">
+                    <div class="threshold-header">
+                        <span class="threshold-name">当前电价</span>
+                        <span>
+                            <span class="threshold-value-display" id="currentPriceDisplay">0.55</span>
+                            <span class="threshold-unit">元</span>
+                        </span>
+                    </div>
+                    <div class="slider-with-steps">
+                        <button class="step-btn" onclick="decrementCurrentPrice()">-</button>
+                        <input type="range" class="slider" id="currentPriceSlider" min="0" max="10" step="0.01" value="0.55" oninput="syncCurrentPriceFromSlider()">
+                        <button class="step-btn" onclick="incrementCurrentPrice()">+</button>
+                    </div>
+                    <div class="input-group">
+                        <input type="number" id="currentPriceInput" min="0" max="10" step="0.01" value="0.55" oninput="syncCurrentPriceFromInput()">
+                        <button id="currentPriceSetBtn" onclick="setCurrentPrice()">设置</button>
+                    </div>
+                </div>
+
+                <!-- 需求电价阈值 -->
+                <div class="threshold-item">
+                    <div class="threshold-header">
+                        <span class="threshold-name">需求电价阈值</span>
+                        <span>
+                            <span class="threshold-value-display" id="priceThresholdDisplay">0.00</span>
+                            <span class="threshold-unit">元</span>
+                        </span>
+                    </div>
+                    <div class="slider-with-steps">
+                        <button class="step-btn" onclick="decrementPriceThreshold()">-</button>
+                        <input type="range" class="slider" id="priceThresholdSlider" min="0" max="10" step="0.01" value="0" oninput="syncPriceThresholdFromSlider()">
+                        <button class="step-btn" onclick="incrementPriceThreshold()">+</button>
+                    </div>
+                    <div class="input-group">
+                        <input type="number" id="priceThresholdInput" min="0" max="10" step="0.01" value="0" oninput="syncPriceThresholdFromInput()">
+                        <button id="priceThresholdSetBtn" onclick="setPriceThreshold()">设置</button>
+                    </div>
+                </div>
+
+                <!-- 新增：低功率阈值 -->
+                <div class="threshold-item">
+                    <div class="threshold-header">
+                        <span class="threshold-name">低功率阈值</span>
+                        <span>
+                            <span class="threshold-value-display" id="powerLowThresholdDisplay">1.0</span>
+                            <span class="threshold-unit">W</span>
+                        </span>
+                    </div>
+                    <div class="slider-with-steps">
+                        <button class="step-btn" onclick="decrementPowerLowThreshold()">-</button>
+                        <input type="range" class="slider" id="powerLowThresholdSlider" min="1" max="2000" step="0.1" value="1" oninput="syncPowerLowThresholdFromSlider()">
+                        <button class="step-btn" onclick="incrementPowerLowThreshold()">+</button>
+                    </div>
+                    <div class="input-group">
+                        <input type="number" id="powerLowThresholdInput" min="1" max="2000" step="0.1" value="1" oninput="syncPowerLowThresholdFromInput()">
+                        <button id="powerLowThresholdSetBtn" onclick="setPowerLowThreshold()">设置</button>
+                    </div>
+                </div>
+
+                <!-- 新增：低功率持续时间 -->
+                <div class="threshold-item">
+                    <div class="threshold-header">
+                        <span class="threshold-name">低功率持续时间</span>
+                        <span>
+                            <span class="threshold-value-display" id="lowPowerDurationDisplay">60</span>
+                            <span class="threshold-unit">秒</span>
+                        </span>
+                    </div>
+                    <div class="slider-with-steps">
+                        <button class="step-btn" onclick="decrementLowPowerDuration()">-</button>
+                        <input type="range" class="slider" id="lowPowerDurationSlider" min="1" max="1200" step="1" value="60" oninput="syncLowPowerDurationFromSlider()">
+                        <button class="step-btn" onclick="incrementLowPowerDuration()">+</button>
+                    </div>
+                    <div class="input-group">
+                        <input type="number" id="lowPowerDurationInput" min="1" max="1200" step="1" value="60" oninput="syncLowPowerDurationFromInput()">
+                        <button id="lowPowerDurationSetBtn" onclick="setLowPowerDuration()">设置</button>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
-    <!-- 插座开关按钮 -->
-    <div class="switch-container">
-        <span class="switch-label">插座开关</span>
-        <button class="switch-btn" id="socketSwitch" onclick="toggleSocket()"></button>
-    </div>
-
-    <!-- 阈值设置卡片 -->
-    <div class="threshold-card">
-        <div class="threshold-title">⚙️ 阈值设置</div>
-
-        <!-- 电压阈值 -->
-        <div class="threshold-item">
-            <div class="threshold-header">
-                <span class="threshold-name">电压上限</span>
-                <span>
-                    <span class="threshold-value-display" id="voltageMaxDisplay">250</span>
-                    <span class="threshold-unit">V</span>
-                </span>
-            </div>
-            <input type="range" class="slider" id="voltageMaxSlider" min="0" max="500" step="1" value="250" oninput="syncVoltageMaxFromSlider()">
-            <div class="input-group">
-                <input type="number" id="voltageMaxInput" min="0" max="500" step="1" value="250" oninput="syncVoltageMaxFromInput()">
-                <button id="voltageMaxSetBtn" onclick="setVoltageMax()">设置</button>
-            </div>
-        </div>
-
-        <!-- 电流阈值 -->
-        <div class="threshold-item">
-            <div class="threshold-header">
-                <span class="threshold-name">电流上限</span>
-                <span>
-                    <span class="threshold-value-display" id="currentMaxDisplay">5000</span>
-                    <span class="threshold-unit">mA</span>
-                </span>
-            </div>
-            <input type="range" class="slider" id="currentMaxSlider" min="0" max="10000" step="100" value="5000" oninput="syncCurrentMaxFromSlider()">
-            <div class="input-group">
-                <input type="number" id="currentMaxInput" min="0" max="10000" step="100" value="5000" oninput="syncCurrentMaxFromInput()">
-                <button id="currentMaxSetBtn" onclick="setCurrentMax()">设置</button>
-            </div>
-        </div>
-
-        <!-- 功率阈值 -->
-        <div class="threshold-item">
-            <div class="threshold-header">
-                <span class="threshold-name">功率上限</span>
-                <span>
-                    <span class="threshold-value-display" id="powerMaxDisplay">600</span>
-                    <span class="threshold-unit">W</span>
-                </span>
-            </div>
-            <input type="range" class="slider" id="powerMaxSlider" min="0" max="2500" step="10" value="600" oninput="syncPowerMaxFromSlider()">
-            <div class="input-group">
-                <input type="number" id="powerMaxInput" min="0" max="2500" step="10" value="600" oninput="syncPowerMaxFromInput()">
-                <button id="powerMaxSetBtn" onclick="setPowerMax()">设置</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- 历史数据展示卡片（含峰值信息，采用时间分片 + offset 分页 + 100ms延迟） -->
-    <div class="history-card">
-        <div class="history-title">📊 历史数据记录（最近24小时）</div>
-        <!-- 属性切换按钮 -->
-        <div class="history-btn-group" id="historyAttrGroup">
-            <button class="history-attr-btn active" data-attr="voltage">电压</button>
-            <button class="history-attr-btn" data-attr="current">电流</button>
-            <button class="history-attr-btn" data-attr="power">功率</button>
-            <button class="history-attr-btn" data-attr="tem">温度</button>
-            <button class="history-attr-btn" data-attr="humi">湿度</button>
-        </div>
-        <!-- 峰值信息 -->
-        <div class="peak-info" id="peakInfo">
-            <span>📈 峰值:</span> <span id="peakValue">--</span> <span id="peakUnit"></span> 出现在 <span id="peakTime">--</span>
-        </div>
-        <!-- 图表容器 -->
-        <div id="historyChart"></div>
-        <div id="historyLoading" class="loading" style="display: none;">加载历史数据中...</div>
-    </div>
-
-    <div id="errorMsg" class="error-msg"></div>
-
-    <div class="footer-note">
-        数据来自OneNET · 实时刷新
-    </div>
-</div>
-
-<script>
-    // ============ 配置信息 ============
-    const productId = "YSrJ9TY9w1";
-    const deviceName = "SmartOutlet";
-    const authToken = "version=2022-05-01&res=userid%2F491619&et=1808555981&method=sha1&sign=%2BI%2FAurwKP8oJIdwa3BJ7xLm%2FKmg%3D";
-    const API_BASE = "https://iot-api.heclouds.com";
-
-    let socketState = false;
-
-    // DOM 元素
-    const voltageSpan = document.getElementById('voltage');
-    const currentSpan = document.getElementById('current');
-    const powerSpan = document.getElementById('power');
-    const temSpan = document.getElementById('tem');
-    const humiSpan = document.getElementById('humi');
-    const totalEnergySpan = document.getElementById('totalEnergy');
-    const switchBtn = document.getElementById('socketSwitch');
-    const errorDiv = document.getElementById('errorMsg');
-
-    // 阈值元素
-    const voltageMaxSlider = document.getElementById('voltageMaxSlider');
-    const voltageMaxInput = document.getElementById('voltageMaxInput');
-    const voltageMaxDisplay = document.getElementById('voltageMaxDisplay');
-    const currentMaxSlider = document.getElementById('currentMaxSlider');
-    const currentMaxInput = document.getElementById('currentMaxInput');
-    const currentMaxDisplay = document.getElementById('currentMaxDisplay');
-    const powerMaxSlider = document.getElementById('powerMaxSlider');
-    const powerMaxInput = document.getElementById('powerMaxInput');
-    const powerMaxDisplay = document.getElementById('powerMaxDisplay');
-    const voltageMaxSetBtn = document.getElementById('voltageMaxSetBtn');
-    const currentMaxSetBtn = document.getElementById('currentMaxSetBtn');
-    const powerMaxSetBtn = document.getElementById('powerMaxSetBtn');
-
-    // 历史模块元素
-    const historyAttrBtns = document.querySelectorAll('.history-attr-btn');
-    const historyChartDiv = document.getElementById('historyChart');
-    const historyLoading = document.getElementById('historyLoading');
-    const peakValueSpan = document.getElementById('peakValue');
-    const peakUnitSpan = document.getElementById('peakUnit');
-    const peakTimeSpan = document.getElementById('peakTime');
-    let historyChart = null;
-    let currentHistoryAttr = 'voltage';
-
-    // ============ 通用函数 ============
-    function showError(msg) {
-        errorDiv.style.display = 'block';
-        errorDiv.innerText = '❌ ' + msg;
-        setTimeout(() => { errorDiv.style.display = 'none'; }, 5000);
-    }
-
-    function updateSwitchUI() {
-        if (socketState) {
-            switchBtn.classList.add('on');
-        } else {
-            switchBtn.classList.remove('on');
-        }
-    }
-
-    // 阈值同步函数
-    function syncVoltageMaxFromSlider() {
-        const val = parseInt(voltageMaxSlider.value);
-        voltageMaxInput.value = val;
-        voltageMaxDisplay.innerText = val;
-    }
-    function syncVoltageMaxFromInput() {
-        let val = parseInt(voltageMaxInput.value);
-        if (isNaN(val)) val = 0;
-        val = Math.min(500, Math.max(0, val));
-        voltageMaxInput.value = val;
-        voltageMaxSlider.value = val;
-        voltageMaxDisplay.innerText = val;
-    }
-    function syncCurrentMaxFromSlider() {
-        const val = parseInt(currentMaxSlider.value);
-        currentMaxInput.value = val;
-        currentMaxDisplay.innerText = val;
-    }
-    function syncCurrentMaxFromInput() {
-        let val = parseInt(currentMaxInput.value);
-        if (isNaN(val)) val = 0;
-        val = Math.min(10000, Math.max(0, val));
-        currentMaxInput.value = val;
-        currentMaxSlider.value = val;
-        currentMaxDisplay.innerText = val;
-    }
-    function syncPowerMaxFromSlider() {
-        const val = parseInt(powerMaxSlider.value);
-        powerMaxInput.value = val;
-        powerMaxDisplay.innerText = val;
-    }
-    function syncPowerMaxFromInput() {
-        let val = parseInt(powerMaxInput.value);
-        if (isNaN(val)) val = 0;
-        val = Math.min(2500, Math.max(0, val));
-        powerMaxInput.value = val;
-        powerMaxSlider.value = val;
-        powerMaxDisplay.innerText = val;
-    }
-
-    // ============ 实时数据获取 ============
-    function fetchDeviceData() {
-        const url = `${API_BASE}/thingmodel/query-device-property?product_id=${productId}&device_name=${deviceName}`;
-        fetch(url, {
-            method: 'GET',
-            headers: {
-                'Authorization': authToken,
-                'Content-Type': 'application/json'
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.code !== 0) throw new Error(data.msg || '获取数据失败');
-            const props = data.data || [];
-            const propMap = {};
-            props.forEach(item => propMap[item.identifier] = item);
-
-            if (propMap.voltage) voltageSpan.innerText = parseFloat(propMap.voltage.value).toFixed(1);
-            if (propMap.current) currentSpan.innerText = parseFloat(propMap.current.value).toFixed(2);
-            if (propMap.power) powerSpan.innerText = parseFloat(propMap.power.value).toFixed(1);
-            if (propMap.tem) temSpan.innerText = propMap.tem.value;
-            if (propMap.humi) humiSpan.innerText = propMap.humi.value;
-            if (propMap.total_energy) {
-                totalEnergySpan.innerText = parseFloat(propMap.total_energy.value).toFixed(3);
-            }
-
-            if (propMap.socket) {
-                let val = propMap.socket.value;
-                if (typeof val === 'boolean') socketState = val;
-                else if (typeof val === 'string') socketState = val.toLowerCase() === 'true' || val === '1';
-                else socketState = val === 1;
-                updateSwitchUI();
-            }
-
-            if (propMap.voltage_max) {
-                let v = parseInt(propMap.voltage_max.value) || 0;
-                voltageMaxSlider.value = v;
-                voltageMaxInput.value = v;
-                voltageMaxDisplay.innerText = v;
-            }
-            if (propMap.current_max) {
-                let c = parseInt(propMap.current_max.value) || 0;
-                currentMaxSlider.value = c;
-                currentMaxInput.value = c;
-                currentMaxDisplay.innerText = c;
-            }
-            if (propMap.power_max) {
-                let p = parseInt(propMap.power_max.value) || 0;
-                powerMaxSlider.value = p;
-                powerMaxInput.value = p;
-                powerMaxDisplay.innerText = p;
-            }
-        })
-        .catch(error => {
-            console.error(error);
-            showError(error.message);
-        });
-    }
-
-    // ============ 开关控制 ============
-    function sendCommand(params) {
-        const url = `${API_BASE}/thingmodel/set-device-desired-property`;
-        const body = {
-            product_id: productId,
-            device_name: deviceName,
-            params: params
-        };
-        return fetch(url, {
-            method: 'POST',
-            headers: {
-                'Authorization': authToken,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(body)
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.code !== 0) throw new Error(data.msg || '命令下发失败');
-            return data;
-        });
-    }
-
-    function toggleSocket() {
-        if (switchBtn.disabled) return;
-        switchBtn.disabled = true;
-
-        const newState = !socketState;
-        sendCommand({ socket: newState ? 1 : 0 })
-            .then(() => {
-                setTimeout(() => {
-                    fetchDeviceData();
-                    switchBtn.disabled = false;
-                }, 1000);
-            })
-            .catch(error => {
-                showError(error.message);
-                switchBtn.disabled = false;
-            });
-    }
-
-    // 阈值设置
-    function setVoltageMax() {
-        const val = parseInt(voltageMaxInput.value);
-        if (isNaN(val)) return;
-        voltageMaxSetBtn.disabled = true;
-        sendCommand({ voltage_max: val })
-            .then(() => {
-                setTimeout(fetchDeviceData, 500);
-                voltageMaxSetBtn.disabled = false;
-            })
-            .catch(error => {
-                showError(error.message);
-                voltageMaxSetBtn.disabled = false;
-            });
-    }
-    function setCurrentMax() {
-        const val = parseInt(currentMaxInput.value);
-        if (isNaN(val)) return;
-        currentMaxSetBtn.disabled = true;
-        sendCommand({ current_max: val })
-            .then(() => {
-                setTimeout(fetchDeviceData, 500);
-                currentMaxSetBtn.disabled = false;
-            })
-            .catch(error => {
-                showError(error.message);
-                currentMaxSetBtn.disabled = false;
-            });
-    }
-    function setPowerMax() {
-        const val = parseInt(powerMaxInput.value);
-        if (isNaN(val)) return;
-        powerMaxSetBtn.disabled = true;
-        sendCommand({ power_max: val })
-            .then(() => {
-                setTimeout(fetchDeviceData, 500);
-                powerMaxSetBtn.disabled = false;
-            })
-            .catch(error => {
-                showError(error.message);
-                powerMaxSetBtn.disabled = false;
-            });
-    }
-
-    // ============ 历史数据功能（按小时分片 + offset 分页 + 100ms延迟） ============
-    // 获取最近24小时的时间范围
-    function getLast24HoursRange() {
-        const end = Date.now();
-        const start = end - 24 * 60 * 60 * 1000;
-        return { start, end };
-    }
-
-    // 按小时分片获取历史数据，使用 offset 分页，并添加100ms延迟
-    async function fetchHistoryData(identifier, totalStart, totalEnd) {
-        let allPoints = [];
-        const hourMs = 60 * 60 * 1000;
-        let currentStart = totalStart;
-
-        // 遍历每个小时片段
-        while (currentStart < totalEnd) {
-            const currentEnd = Math.min(currentStart + hourMs, totalEnd);
-            let offset = 0;
-            let hasMore = true;
-
-            while (hasMore) {
-                try {
-                    const params = new URLSearchParams({
-                        product_id: productId,
-                        device_name: deviceName,
-                        identifier: identifier,
-                        start_time: currentStart,
-                        end_time: currentEnd,
-                        limit: 1000,
-                        sort: '2',      // 倒序（最新在前）
-                        offset: offset   // 偏移量
-                    });
-
-                    const response = await fetch(`${API_BASE}/thingmodel/query-device-property-history?${params}`, {
-                        method: 'GET',
-                        headers: {
-                            'Authorization': authToken,
-                            'Content-Type': 'application/json'
-                        }
-                    });
-                    const result = await response.json();
-                    if (result.code !== 0) {
-                        throw new Error(result.msg || '历史数据获取失败');
-                    }
-                    const list = result.data?.list || [];
-                    if (list.length > 0) {
-                        allPoints = allPoints.concat(list.map(item => ({
-                            time: item.time,
-                            value: parseFloat(item.value) || 0
-                        })));
-                        offset += list.length;  // 增加偏移量
-                        // 如果返回的数据条数小于 limit，说明已取完该时段所有数据
-                        if (list.length < 1000) {
-                            hasMore = false;
-                        }
-                    } else {
-                        hasMore = false; // 无数据，结束循环
-                    }
-                } catch (error) {
-                    showError(`小时片段 ${new Date(currentStart).getHours()}:00 数据获取失败: ${error.message}`);
-                    // 跳出当前片段的循环，继续下一个片段
-                    break;
-                }
-
-                // 如果还有更多页，延迟100ms再发起下一次请求
-                if (hasMore) {
-                    await new Promise(resolve => setTimeout(resolve, 50));
-                }
-            }
-            currentStart = currentEnd;
-        }
-
-        // 去重（理论上 offset 分页不会重复，但以防万一）、排序（升序便于图表展示）
-        const unique = {};
-        allPoints.forEach(p => unique[p.time] = p);
-        let sorted = Object.values(unique).sort((a, b) => a.time - b.time);
-        return sorted;
-    }
-
-    // 根据属性获取单位
-    function getUnit(identifier) {
-        const map = {
-            voltage: 'V',
-            current: 'A',
-            power: 'W',
-            tem: '℃',
-            humi: '%'
-        };
-        return map[identifier] || '';
-    }
-
-    // 计算峰值并更新显示
-    function updatePeakInfo(data, identifier) {
-        if (!data || data.length === 0) {
-            peakValueSpan.innerText = '--';
-            peakUnitSpan.innerText = '';
-            peakTimeSpan.innerText = '--';
-            return;
-        }
-
-        let maxValue = -Infinity;
-        let maxTime = data[0].time;
-        for (let point of data) {
-            if (point.value > maxValue) {
-                maxValue = point.value;
-                maxTime = point.time;
-            }
-        }
-
-        const unit = getUnit(identifier);
-        const d = new Date(maxTime);
-        const timeStr = `${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`;
-
-        peakValueSpan.innerText = maxValue.toFixed(2);
-        peakUnitSpan.innerText = unit;
-        peakTimeSpan.innerText = timeStr;
-    }
-
-    // 渲染图表
-    function renderHistoryChart(data, identifier) {
-        if (!historyChart) {
-            historyChart = echarts.init(historyChartDiv);
-        }
-
-        // 更新峰值信息
-        updatePeakInfo(data, identifier);
-
-        if (!data || data.length === 0) {
-            historyChart.setOption({
-                title: { text: '无数据', left: 'center', top: 'center' },
-                xAxis: { data: [] },
-                yAxis: {},
-                series: []
-            });
-            return;
-        }
-
-        // 准备数据
-        const times = data.map(p => {
-            const d = new Date(p.time);
-            return `${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`;
-        });
-        const values = data.map(p => p.value);
-        const unit = getUnit(identifier);
-
-        const option = {
-            tooltip: {
-                trigger: 'axis',
-                formatter: function(params) {
-                    return `${params[0].axisValue}<br/>数值: ${params[0].value} ${unit}`;
-                }
-            },
-            grid: { left: '10%', right: '8%', top: 20, bottom: 25, containLabel: true },
-            xAxis: {
-                type: 'category',
-                data: times,
-                axisLabel: { rotate: 30, fontSize: 10 }
-            },
-            yAxis: {
-                type: 'value',
-                name: unit,
-                nameTextStyle: { fontSize: 10 }
-            },
-            series: [{
-                name: identifier,
-                type: 'line',
-                data: values,
-                smooth: true,
-                lineStyle: { color: '#3b82f6', width: 2 },
-                symbol: 'circle',
-                symbolSize: 6
-            }]
-        };
-
-        historyChart.setOption(option);
-    }
-
-    // 加载历史数据并更新图表
-    async function loadHistoryData(identifier) {
-        historyLoading.style.display = 'block';
-        if (historyChart) historyChart.clear();
-
-        const range = getLast24HoursRange();
-        const data = await fetchHistoryData(identifier, range.start, range.end);
-
-        historyLoading.style.display = 'none';
-        renderHistoryChart(data, identifier);
-    }
-
-    // 切换属性按钮高亮
-    function setActiveAttrBtn(btn) {
-        historyAttrBtns.forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        currentHistoryAttr = btn.dataset.attr;
-        loadHistoryData(currentHistoryAttr);
-    }
-
-    // 初始化历史模块
-    function initHistoryModule() {
-        historyAttrBtns.forEach(btn => {
-            btn.addEventListener('click', () => setActiveAttrBtn(btn));
-        });
-        // 默认加载电压数据
-        loadHistoryData('voltage');
-    }
-
-    // ============ 初始化 ============
-    window.onload = function() {
-        fetchDeviceData();
-        setInterval(fetchDeviceData, 5000);
-        syncVoltageMaxFromInput();
-        syncCurrentMaxFromInput();
-        syncPowerMaxFromInput();
-        updateSwitchUI();
-        initHistoryModule();
-    };
-</script>
+    <!-- 引入外部JS -->
+    <script src="js/index.js"></script>
 </body>
 </html>
