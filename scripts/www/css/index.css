@@ -11,7 +11,6 @@ body {
     min-height: 100vh;
 }
 
-/* 顶部导航栏 */
 .header {
     background: linear-gradient(90deg, #3b82f6 0%, #60a5fa 100%);
     color: white;
@@ -45,7 +44,6 @@ body {
     font-size: 14px;
 }
 
-/* 主容器 - 左右分栏布局 */
 .container {
     max-width: 1200px;
     margin: 24px auto;
@@ -55,21 +53,18 @@ body {
     gap: 24px;
 }
 
-/* 左侧主内容区 */
 .main-content {
     display: flex;
     flex-direction: column;
     gap: 24px;
 }
 
-/* 右侧辅助区（阈值设置） */
 .sidebar {
     display: flex;
     flex-direction: column;
     gap: 24px;
 }
 
-/* 卡片通用样式 */
 .card {
     background: white;
     border-radius: 12px;
@@ -96,7 +91,6 @@ body {
     border-radius: 2px;
 }
 
-/* 实时数据网格 */
 .sensor-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -140,7 +134,6 @@ body {
     margin-left: 6px;
 }
 
-/* 设备控制区 */
 .device-controls {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -212,7 +205,6 @@ body {
     cursor: not-allowed;
 }
 
-/* 历史数据区 */
 .history-controls {
     display: flex;
     flex-direction: column;
@@ -220,7 +212,6 @@ body {
     margin-bottom: 16px;
 }
 
-/* 自定义时间输入框样式 */
 .custom-time-group {
     display: flex;
     gap: 10px;
@@ -325,7 +316,6 @@ body {
     border: 1px solid #f1f5f9;
 }
 
-/* 阈值设置区 */
 .threshold-item {
     margin-bottom: 16px;
 }
@@ -438,7 +428,6 @@ body {
     background: linear-gradient(90deg, #2563eb, #3b82f6);
 }
 
-/* 提示信息 */
 .error-msg {
     color: #dc2626;
     background: #fee2e2;
@@ -467,74 +456,59 @@ body {
     margin-top: 24px;
 }
 
-/* 响应式适配 */
 @media (max-width: 992px) {
     .container {
         grid-template-columns: 1fr;
     }
-    
     .sidebar {
-        order: 2; /* 移动端阈值设置区放下面 */
+        order: 2;
     }
-    
     .main-content {
         order: 1;
     }
 }
 
 @media (max-width: 480px) {
-    /* 针对小屏手机（包括 iPhone 17 Pro Max 等大屏手机）优化 */
     .header h1 {
         font-size: 20px;
     }
-    
     .sensor-value {
-        font-size: 24px; /* 增大数值显示 */
+        font-size: 24px;
     }
-    
     .switch-btn {
-        width: 68px;      /* 增大开关按钮宽度 */
-        height: 36px;     /* 增大开关按钮高度 */
+        width: 68px;
+        height: 36px;
     }
-    
     .switch-btn.on::after {
-        left: 36px;       /* 滑块跟随调整 */
+        left: 36px;
     }
-    
     .step-btn {
-        width: 40px;      /* 增大步进按钮尺寸 */
+        width: 40px;
         height: 40px;
         font-size: 20px;
     }
-    
     .slider {
-        height: 8px;      /* 略微增加滑块高度 */
+        height: 8px;
     }
-    
     #historyChart {
         height: 240px;
     }
-    
     .container {
         padding: 0 16px;
         margin: 16px auto;
     }
-    
     .card {
         padding: 16px;
     }
-    
     .custom-time-group {
         flex-direction: column;
     }
-    
     .confirm-btn {
         padding: 10px 0;
         width: 100%;
     }
 }
 
-/* 可选：针对更大屏幕的平板进行微调 */
 @media (min-width: 481px) and (max-width: 768px) {
     .sensor-value {
         font-size: 22px;
