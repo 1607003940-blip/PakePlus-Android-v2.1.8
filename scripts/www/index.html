@@ -2,266 +2,613 @@
 <html lang="zh">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>插座数据监测</title>
-    <!-- 引入外部样式和脚本 -->
-    <link rel="stylesheet" href="css/index.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>插座数据监测系统 · 精简卡片版</title>
+    <!-- ECharts (保持与原版本一致) -->
     <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <style>
+        /* ========== 基础重置 & 紧凑卡片风格 (融合第二版的柔和感) ========== */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+        }
+
+        body {
+            background: #f4f7fc;  /* 更柔和的背景 */
+            padding: 16px 12px;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            max-width: 600px;       /* 比原500px稍宽，适应更多内容，但仍保持紧凑 */
+            width: 100%;
+            background: transparent; /* 整体背景透明，每个卡片自有白底 */
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        /* 通用卡片样式 */
+        .card {
+            background: #ffffff;
+            border-radius: 28px;
+            padding: 22px 20px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.02), 0 2px 6px rgba(0, 20, 50, 0.03);
+            border: 1px solid #f0f3f8;
+        }
+
+        /* 标题行 (融合时间标签) */
+        .header-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+        .header-row h1 {
+            font-size: 26px;
+            font-weight: 650;
+            letter-spacing: -0.3px;
+            background: linear-gradient(145deg, #1e2b4f, #1e3a8a);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin: 0;
+        }
+        .time-badge {
+            background: #eef2f6;
+            padding: 8px 16px;
+            border-radius: 40px;
+            font-size: 14px;
+            font-weight: 500;
+            color: #1e293b;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.02);
+        }
+
+        /* 实时数据网格 (6项, 2列) */
+        .sensor-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 14px;
+            margin-top: 6px;
+        }
+        .sensor-item {
+            background: #f9fcff;
+            border-radius: 24px;
+            padding: 18px 16px;
+            border: 1px solid #e9edf4;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.01);
+            transition: 0.1s;
+        }
+        .sensor-label {
+            font-size: 14px;
+            color: #5b6e8c;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-weight: 480;
+        }
+        .sensor-value {
+            font-size: 30px;
+            font-weight: 650;
+            color: #0f263d;
+            line-height: 1.1;
+        }
+        .sensor-unit {
+            font-size: 15px;
+            font-weight: 400;
+            color: #7f8fa4;
+            margin-left: 5px;
+        }
+
+        /* 设备控制卡片 (三个开关纵向排列) */
+        .controls-stack {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .switch-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #f9fcff;
+            border-radius: 60px;
+            padding: 10px 20px 10px 24px;
+            border: 1px solid #e9edf4;
+        }
+        .switch-label {
+            font-size: 17px;
+            font-weight: 520;
+            color: #1e2b4f;
+        }
+        .switch-btn {
+            width: 66px;
+            height: 36px;
+            border-radius: 36px;
+            background: #cfddee;
+            border: none;
+            position: relative;
+            cursor: pointer;
+            transition: background 0.2s;
+            flex-shrink: 0;
+        }
+        .switch-btn.on {
+            background: #3b82f6;
+        }
+        .switch-btn::after {
+            content: '';
+            position: absolute;
+            width: 32px;
+            height: 32px;
+            background: white;
+            border-radius: 50%;
+            top: 2px;
+            left: 2px;
+            transition: left 0.2s;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .switch-btn.on::after {
+            left: 32px;
+        }
+        .switch-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* 阈值设置卡片 — 每个参数一个块 (保留步进按钮) */
+        .threshold-item {
+            background: #f9fcff;
+            border-radius: 24px;
+            padding: 18px 18px 20px;
+            margin-bottom: 16px;
+            border: 1px solid #e9edf4;
+        }
+        .threshold-item:last-child {
+            margin-bottom: 0;
+        }
+        .threshold-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 14px;
+            padding: 0 4px;
+        }
+        .threshold-name {
+            font-weight: 540;
+            color: #2a3d62;
+            font-size: 16px;
+        }
+        .threshold-value-display {
+            font-size: 20px;
+            font-weight: 650;
+            color: #1e3a8a;
+        }
+        .threshold-unit {
+            font-size: 14px;
+            color: #6f7f9a;
+            margin-left: 4px;
+        }
+        .slider-with-steps {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 12px 0 16px;
+        }
+        .step-btn {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: #e5ecf5;
+            border: none;
+            font-size: 22px;
+            font-weight: 600;
+            color: #1e3a8a;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: 0.1s;
+            flex-shrink: 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        }
+        .step-btn:active {
+            background: #d0ddee;
+            transform: scale(0.96);
+        }
+        .slider {
+            flex: 1;
+            height: 6px;
+            border-radius: 6px;
+            accent-color: #3b82f6;
+        }
+        .input-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .input-group input {
+            flex: 1;
+            padding: 12px 18px;
+            border: 1px solid #dbe1ea;
+            border-radius: 40px;
+            font-size: 15px;
+            background: #ffffff;
+            outline: none;
+            transition: 0.15s;
+            color: #0f263d;
+        }
+        .input-group input:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
+        }
+        .input-group button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 40px;
+            padding: 12px 24px;
+            font-weight: 600;
+            font-size: 15px;
+            cursor: pointer;
+            transition: 0.1s;
+            white-space: nowrap;
+            box-shadow: 0 4px 8px rgba(59,130,246,0.15);
+            border: 1px solid #3b82f6;
+        }
+        .input-group button:active {
+            background: #2563eb;
+            transform: scale(0.97);
+        }
+        .input-group button:disabled {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+
+        /* 历史数据卡片 (复杂但保持紧凑) */
+        .history-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .history-time-btn, .history-attr-btn {
+            background: #edf2f9;
+            border: none;
+            border-radius: 40px;
+            padding: 10px 0;
+            font-weight: 530;
+            font-size: 15px;
+            color: #2c3f5c;
+            cursor: pointer;
+            transition: 0.1s;
+            text-align: center;
+            flex: 1 0 auto;
+            min-width: 70px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+        }
+        .history-time-btn.active, .history-attr-btn.active {
+            background: #3b82f6;
+            color: white;
+            box-shadow: 0 6px 12px rgba(59,130,246,0.25);
+        }
+        .custom-time-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .time-input {
+            flex: 1 1 180px;
+            padding: 12px 16px;
+            border: 1px solid #dbe1ea;
+            border-radius: 40px;
+            font-size: 14px;
+            background: white;
+        }
+        .confirm-btn {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 40px;
+            padding: 12px 25px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .peak-info {
+            background: #edf4fd;
+            border-radius: 22px;
+            padding: 16px 20px;
+            font-size: 15px;
+            color: #1e293b;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 20px 0 16px;
+            border: 1px solid #dde7f5;
+        }
+        .peak-info span {
+            font-weight: 600;
+            color: #2563eb;
+        }
+        #historyChart {
+            width: 100%;
+            height: 260px;
+            background: #ffffff;
+            border-radius: 28px;
+            padding: 8px 4px;
+            margin-bottom: 8px;
+            border: 1px solid #ecf1f7;
+        }
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #5b6e8c;
+        }
+        .error-msg {
+            color: #b91c1c;
+            background: #fee9e7;
+            padding: 14px 20px;
+            border-radius: 40px;
+            font-size: 15px;
+            text-align: center;
+            display: none;
+            border: 1px solid #fbc5c0;
+        }
+        .footer-note {
+            text-align: center;
+            font-size: 13px;
+            color: #8a99b4;
+            padding: 16px 0 8px;
+            border-top: 1px dashed #d7e0ea;
+            margin-top: 12px;
+        }
+
+        /* 小屏微调 */
+        @media (max-width: 420px) {
+            .container { max-width: 100%; }
+            .sensor-value { font-size: 26px; }
+            .btn-group { gap: 6px; }
+            .history-time-btn, .history-attr-btn { font-size: 13px; padding: 8px 0; }
+        }
+    </style>
 </head>
 <body>
-    <!-- 顶部导航 -->
-    <header class="header">
-        <h1>插座数据监测系统</h1>
+<div class="container">
+
+    <!-- ========= 标题行 + 时间 ========= -->
+    <div class="header-row">
+        <h1>🔌 插座数据监测</h1>
         <div class="time-badge" id="currentTime"></div>
-    </header>
+    </div>
 
-    <!-- 主容器 -->
-    <div class="container">
-        <!-- 左侧主内容区 -->
-        <div class="main-content">
-            <!-- 实时数据卡片 -->
-            <div class="card">
-                <div class="card-title">实时监测数据</div>
-                <div class="sensor-grid">
-                    <div class="sensor-item">
-                        <div class="sensor-label">⚡ 电压</div>
-                        <div><span class="sensor-value" id="voltage">--</span><span class="sensor-unit">V</span></div>
-                    </div>
-                    <div class="sensor-item">
-                        <div class="sensor-label">🔌 电流</div>
-                        <div><span class="sensor-value" id="current">--</span><span class="sensor-unit">mA</span></div>
-                    </div>
-                    <div class="sensor-item">
-                        <div class="sensor-label">💡 功率</div>
-                        <div><span class="sensor-value" id="power">--</span><span class="sensor-unit">W</span></div>
-                    </div>
-                    <div class="sensor-item">
-                        <div class="sensor-label">🌡️ 温度</div>
-                        <div><span class="sensor-value" id="tem">--</span><span class="sensor-unit">°C</span></div>
-                    </div>
-                    <div class="sensor-item">
-                        <div class="sensor-label">💧 湿度</div>
-                        <div><span class="sensor-value" id="humi">--</span><span class="sensor-unit">%RH</span></div>
-                    </div>
-                    <div class="sensor-item">
-                        <div class="sensor-label">🔋 累计用电</div>
-                        <div><span class="sensor-value" id="total_energy">--</span><span class="sensor-unit">kWh</span></div>
-                    </div>
-                </div>
+    <!-- ========= 实时监测数据卡片 (6项) ========= -->
+    <div class="card">
+        <div class="sensor-grid">
+            <div class="sensor-item">
+                <div class="sensor-label">⚡ 电压</div>
+                <div><span class="sensor-value" id="voltage">--</span><span class="sensor-unit">V</span></div>
             </div>
-
-            <!-- 设备控制区 -->
-            <div class="card">
-                <div class="card-title">设备控制</div>
-                <div class="device-controls">
-                    <div class="switch-container">
-                        <span class="switch-label">插座开关</span>
-                        <button class="switch-btn" id="socketSwitch" onclick="toggleSocket()"></button>
-                    </div>
-                    <div class="switch-container">
-                        <span class="switch-label">自动模式</span>
-                        <button class="switch-btn" id="autoPriceSwitch" onclick="toggleAutoPrice()"></button>
-                    </div>
-                    <!-- 新增省电开关 -->
-                    <div class="switch-container">
-                        <span class="switch-label">省电模式</span>
-                        <button class="switch-btn" id="lowPowerSwitch" onclick="toggleLowPower()"></button>
-                    </div>
-                </div>
+            <div class="sensor-item">
+                <div class="sensor-label">🔌 电流</div>
+                <div><span class="sensor-value" id="current">--</span><span class="sensor-unit">mA</span></div>
             </div>
-
-            <!-- 历史数据区 -->
-            <div class="card">
-                <div class="card-title">历史数据记录</div>
-                <div class="history-controls">
-                    <!-- 保留24小时和7天快捷按钮 -->
-                    <div class="history-time-group" id="historyTimeGroup">
-                        <button class="history-time-btn active" data-days="1">24小时</button>
-                        <button class="history-time-btn" data-days="7">7天</button>
-                    </div>
-                    <!-- 新增自定义时间范围输入框 -->
-                    <div class="custom-time-group">
-                        <input type="datetime-local" id="startTimeInput" class="time-input" placeholder="开始时间">
-                        <input type="datetime-local" id="endTimeInput" class="time-input" placeholder="结束时间">
-                        <button class="confirm-btn" onclick="queryCustomTimeData()">确定</button>
-                    </div>
-                    <div class="history-btn-group" id="historyAttrGroup">
-                        <button class="history-attr-btn active" data-attr="voltage">电压</button>
-                        <button class="history-attr-btn" data-attr="current">电流</button>
-                        <button class="history-attr-btn" data-attr="power">功率</button>
-                        <button class="history-attr-btn" data-attr="tem">温度</button>
-                        <button class="history-attr-btn" data-attr="humi">湿度</button>
-                        <button class="history-attr-btn" data-attr="total_energy">累计用电</button>
-                    </div>
-                </div>
-                
-                <div class="peak-info" id="peakInfo">
-                    <span>📈 峰值:</span> 
-                    <span id="peakValue">--</span> 
-                    <span id="peakUnit"></span> 
-                    出现在 <span id="peakTime">--</span>
-                </div>
-                
-                <div id="historyChart"></div>
-                <div id="historyLoading" class="loading" style="display: none;">加载中...</div>
+            <div class="sensor-item">
+                <div class="sensor-label">💡 功率</div>
+                <div><span class="sensor-value" id="power">--</span><span class="sensor-unit">W</span></div>
             </div>
-
-            <div id="errorMsg" class="error-msg"></div>
-            
-            <div class="footer-note">
-                数据来自OneNET · 实时刷新 | © 2026 智能插座监测系统
+            <div class="sensor-item">
+                <div class="sensor-label">🌡️ 温度</div>
+                <div><span class="sensor-value" id="tem">--</span><span class="sensor-unit">°C</span></div>
             </div>
-        </div>
-
-        <!-- 右侧辅助区（阈值设置） -->
-        <div class="sidebar">
-            <div class="card">
-                <div class="card-title">阈值参数设置</div>
-                
-                <!-- 电压阈值 -->
-                <div class="threshold-item">
-                    <div class="threshold-header">
-                        <span class="threshold-name">电压阈值</span>
-                        <span>
-                            <span class="threshold-value-display" id="voltageMaxDisplay">250</span>
-                            <span class="threshold-unit">V</span>
-                        </span>
-                    </div>
-                    <div class="slider-with-steps">
-                        <button class="step-btn" onclick="decrementVoltageMax()">-</button>
-                        <input type="range" class="slider" id="voltageMaxSlider" min="0" max="500" step="0.1" value="250" oninput="syncVoltageMaxFromSlider()">
-                        <button class="step-btn" onclick="incrementVoltageMax()">+</button>
-                    </div>
-                    <div class="input-group">
-                        <input type="number" id="voltageMaxInput" min="0" max="500" step="0.1" value="250" oninput="syncVoltageMaxFromInput()">
-                        <button id="voltageMaxSetBtn" onclick="setVoltageMax()">设置</button>
-                    </div>
-                </div>
-
-                <!-- 电流阈值 -->
-                <div class="threshold-item">
-                    <div class="threshold-header">
-                        <span class="threshold-name">电流阈值</span>
-                        <span>
-                            <span class="threshold-value-display" id="currentMaxDisplay">5000</span>
-                            <span class="threshold-unit">mA</span>
-                        </span>
-                    </div>
-                    <div class="slider-with-steps">
-                        <button class="step-btn" onclick="decrementCurrentMax()">-</button>
-                        <input type="range" class="slider" id="currentMaxSlider" min="0" max="50000" step="1" value="5000" oninput="syncCurrentMaxFromSlider()">
-                        <button class="step-btn" onclick="incrementCurrentMax()">+</button>
-                    </div>
-                    <div class="input-group">
-                        <input type="number" id="currentMaxInput" min="0" max="50000" step="1" value="5000" oninput="syncCurrentMaxFromInput()">
-                        <button id="currentMaxSetBtn" onclick="setCurrentMax()">设置</button>
-                    </div>
-                </div>
-
-                <!-- 功率阈值 -->
-                <div class="threshold-item">
-                    <div class="threshold-header">
-                        <span class="threshold-name">功率阈值</span>
-                        <span>
-                            <span class="threshold-value-display" id="powerMaxDisplay">600</span>
-                            <span class="threshold-unit">W</span>
-                        </span>
-                    </div>
-                    <div class="slider-with-steps">
-                        <button class="step-btn" onclick="decrementPowerMax()">-</button>
-                        <input type="range" class="slider" id="powerMaxSlider" min="0" max="5000" step="0.1" value="600" oninput="syncPowerMaxFromSlider()">
-                        <button class="step-btn" onclick="incrementPowerMax()">+</button>
-                    </div>
-                    <div class="input-group">
-                        <input type="number" id="powerMaxInput" min="0" max="5000" step="0.1" value="600" oninput="syncPowerMaxFromInput()">
-                        <button id="powerMaxSetBtn" onclick="setPowerMax()">设置</button>
-                    </div>
-                </div>
-
-                <!-- 电价设置 -->
-                <div class="threshold-item">
-                    <div class="threshold-header">
-                        <span class="threshold-name">当前电价</span>
-                        <span>
-                            <span class="threshold-value-display" id="currentPriceDisplay">0.55</span>
-                            <span class="threshold-unit">元</span>
-                        </span>
-                    </div>
-                    <div class="slider-with-steps">
-                        <button class="step-btn" onclick="decrementCurrentPrice()">-</button>
-                        <input type="range" class="slider" id="currentPriceSlider" min="0" max="10" step="0.01" value="0.55" oninput="syncCurrentPriceFromSlider()">
-                        <button class="step-btn" onclick="incrementCurrentPrice()">+</button>
-                    </div>
-                    <div class="input-group">
-                        <input type="number" id="currentPriceInput" min="0" max="10" step="0.01" value="0.55" oninput="syncCurrentPriceFromInput()">
-                        <button id="currentPriceSetBtn" onclick="setCurrentPrice()">设置</button>
-                    </div>
-                </div>
-
-                <!-- 需求电价阈值 -->
-                <div class="threshold-item">
-                    <div class="threshold-header">
-                        <span class="threshold-name">需求电价阈值</span>
-                        <span>
-                            <span class="threshold-value-display" id="priceThresholdDisplay">0.00</span>
-                            <span class="threshold-unit">元</span>
-                        </span>
-                    </div>
-                    <div class="slider-with-steps">
-                        <button class="step-btn" onclick="decrementPriceThreshold()">-</button>
-                        <input type="range" class="slider" id="priceThresholdSlider" min="0" max="10" step="0.01" value="0" oninput="syncPriceThresholdFromSlider()">
-                        <button class="step-btn" onclick="incrementPriceThreshold()">+</button>
-                    </div>
-                    <div class="input-group">
-                        <input type="number" id="priceThresholdInput" min="0" max="10" step="0.01" value="0" oninput="syncPriceThresholdFromInput()">
-                        <button id="priceThresholdSetBtn" onclick="setPriceThreshold()">设置</button>
-                    </div>
-                </div>
-
-                <!-- 新增：低功率阈值 -->
-                <div class="threshold-item">
-                    <div class="threshold-header">
-                        <span class="threshold-name">低功率阈值</span>
-                        <span>
-                            <span class="threshold-value-display" id="powerLowThresholdDisplay">1.0</span>
-                            <span class="threshold-unit">W</span>
-                        </span>
-                    </div>
-                    <div class="slider-with-steps">
-                        <button class="step-btn" onclick="decrementPowerLowThreshold()">-</button>
-                        <input type="range" class="slider" id="powerLowThresholdSlider" min="1" max="2000" step="0.1" value="1" oninput="syncPowerLowThresholdFromSlider()">
-                        <button class="step-btn" onclick="incrementPowerLowThreshold()">+</button>
-                    </div>
-                    <div class="input-group">
-                        <input type="number" id="powerLowThresholdInput" min="1" max="2000" step="0.1" value="1" oninput="syncPowerLowThresholdFromInput()">
-                        <button id="powerLowThresholdSetBtn" onclick="setPowerLowThreshold()">设置</button>
-                    </div>
-                </div>
-
-                <!-- 新增：低功率持续时间 -->
-                <div class="threshold-item">
-                    <div class="threshold-header">
-                        <span class="threshold-name">低功率持续时间</span>
-                        <span>
-                            <span class="threshold-value-display" id="lowPowerDurationDisplay">60</span>
-                            <span class="threshold-unit">秒</span>
-                        </span>
-                    </div>
-                    <div class="slider-with-steps">
-                        <button class="step-btn" onclick="decrementLowPowerDuration()">-</button>
-                        <input type="range" class="slider" id="lowPowerDurationSlider" min="1" max="1200" step="1" value="60" oninput="syncLowPowerDurationFromSlider()">
-                        <button class="step-btn" onclick="incrementLowPowerDuration()">+</button>
-                    </div>
-                    <div class="input-group">
-                        <input type="number" id="lowPowerDurationInput" min="1" max="1200" step="1" value="60" oninput="syncLowPowerDurationFromInput()">
-                        <button id="lowPowerDurationSetBtn" onclick="setLowPowerDuration()">设置</button>
-                    </div>
-                </div>
+            <div class="sensor-item">
+                <div class="sensor-label">💧 湿度</div>
+                <div><span class="sensor-value" id="humi">--</span><span class="sensor-unit">%RH</span></div>
+            </div>
+            <div class="sensor-item">
+                <div class="sensor-label">🔋 累计用电</div>
+                <div><span class="sensor-value" id="total_energy">--</span><span class="sensor-unit">kWh</span></div>
             </div>
         </div>
     </div>
 
-    <!-- 引入外部JS -->
-    <script src="js/index.js"></script>
+    <!-- ========= 设备控制卡片 (三个开关) ========= -->
+    <div class="card">
+        <div class="controls-stack">
+            <div class="switch-row">
+                <span class="switch-label">插座开关</span>
+                <button class="switch-btn" id="socketSwitch" onclick="toggleSocket()"></button>
+            </div>
+            <div class="switch-row">
+                <span class="switch-label">自动模式</span>
+                <button class="switch-btn" id="autoPriceSwitch" onclick="toggleAutoPrice()"></button>
+            </div>
+            <div class="switch-row">
+                <span class="switch-label">省电开关</span>
+                <button class="switch-btn" id="lowPowerSwitch" onclick="toggleLowPower()"></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========= 阈值参数设置卡片 (全部保留, 紧凑排列) ========= -->
+    <div class="card">
+        <div style="font-size: 18px; font-weight: 600; color: #1e3a8a; margin-bottom: 18px; padding-left: 6px;">⚙️ 阈值设置</div>
+        <!-- 电压阈值 -->
+        <div class="threshold-item">
+            <div class="threshold-header">
+                <span class="threshold-name">电压阈值</span>
+                <span><span class="threshold-value-display" id="voltageMaxDisplay">250</span><span class="threshold-unit">V</span></span>
+            </div>
+            <div class="slider-with-steps">
+                <button class="step-btn" onclick="decrementVoltageMax()">-</button>
+                <input type="range" class="slider" id="voltageMaxSlider" min="0" max="500" step="0.1" value="250" oninput="syncVoltageMaxFromSlider()">
+                <button class="step-btn" onclick="incrementVoltageMax()">+</button>
+            </div>
+            <div class="input-group">
+                <input type="number" id="voltageMaxInput" min="0" max="500" step="0.1" value="250" oninput="syncVoltageMaxFromInput()">
+                <button id="voltageMaxSetBtn" onclick="setVoltageMax()">设置</button>
+            </div>
+        </div>
+        <!-- 电流阈值 -->
+        <div class="threshold-item">
+            <div class="threshold-header">
+                <span class="threshold-name">电流阈值</span>
+                <span><span class="threshold-value-display" id="currentMaxDisplay">5000</span><span class="threshold-unit">mA</span></span>
+            </div>
+            <div class="slider-with-steps">
+                <button class="step-btn" onclick="decrementCurrentMax()">-</button>
+                <input type="range" class="slider" id="currentMaxSlider" min="0" max="50000" step="1" value="5000" oninput="syncCurrentMaxFromSlider()">
+                <button class="step-btn" onclick="incrementCurrentMax()">+</button>
+            </div>
+            <div class="input-group">
+                <input type="number" id="currentMaxInput" min="0" max="50000" step="1" value="5000" oninput="syncCurrentMaxFromInput()">
+                <button id="currentMaxSetBtn" onclick="setCurrentMax()">设置</button>
+            </div>
+        </div>
+        <!-- 功率阈值 -->
+        <div class="threshold-item">
+            <div class="threshold-header">
+                <span class="threshold-name">功率阈值</span>
+                <span><span class="threshold-value-display" id="powerMaxDisplay">600</span><span class="threshold-unit">W</span></span>
+            </div>
+            <div class="slider-with-steps">
+                <button class="step-btn" onclick="decrementPowerMax()">-</button>
+                <input type="range" class="slider" id="powerMaxSlider" min="0" max="5000" step="0.1" value="600" oninput="syncPowerMaxFromSlider()">
+                <button class="step-btn" onclick="incrementPowerMax()">+</button>
+            </div>
+            <div class="input-group">
+                <input type="number" id="powerMaxInput" min="0" max="5000" step="0.1" value="600" oninput="syncPowerMaxFromInput()">
+                <button id="powerMaxSetBtn" onclick="setPowerMax()">设置</button>
+            </div>
+        </div>
+        <!-- 电价设置 -->
+        <div class="threshold-item">
+            <div class="threshold-header">
+                <span class="threshold-name">当前电价</span>
+                <span><span class="threshold-value-display" id="currentPriceDisplay">0.55</span><span class="threshold-unit">元</span></span>
+            </div>
+            <div class="slider-with-steps">
+                <button class="step-btn" onclick="decrementCurrentPrice()">-</button>
+                <input type="range" class="slider" id="currentPriceSlider" min="0" max="10" step="0.01" value="0.55" oninput="syncCurrentPriceFromSlider()">
+                <button class="step-btn" onclick="incrementCurrentPrice()">+</button>
+            </div>
+            <div class="input-group">
+                <input type="number" id="currentPriceInput" min="0" max="10" step="0.01" value="0.55" oninput="syncCurrentPriceFromInput()">
+                <button id="currentPriceSetBtn" onclick="setCurrentPrice()">设置</button>
+            </div>
+        </div>
+        <!-- 需求电价阈值 -->
+        <div class="threshold-item">
+            <div class="threshold-header">
+                <span class="threshold-name">需求电价阈值</span>
+                <span><span class="threshold-value-display" id="priceThresholdDisplay">0.00</span><span class="threshold-unit">元</span></span>
+            </div>
+            <div class="slider-with-steps">
+                <button class="step-btn" onclick="decrementPriceThreshold()">-</button>
+                <input type="range" class="slider" id="priceThresholdSlider" min="0" max="10" step="0.01" value="0" oninput="syncPriceThresholdFromSlider()">
+                <button class="step-btn" onclick="incrementPriceThreshold()">+</button>
+            </div>
+            <div class="input-group">
+                <input type="number" id="priceThresholdInput" min="0" max="10" step="0.01" value="0" oninput="syncPriceThresholdFromInput()">
+                <button id="priceThresholdSetBtn" onclick="setPriceThreshold()">设置</button>
+            </div>
+        </div>
+        <!-- 低功率阈值 -->
+        <div class="threshold-item">
+            <div class="threshold-header">
+                <span class="threshold-name">低功率阈值</span>
+                <span><span class="threshold-value-display" id="powerLowThresholdDisplay">1.0</span><span class="threshold-unit">W</span></span>
+            </div>
+            <div class="slider-with-steps">
+                <button class="step-btn" onclick="decrementPowerLowThreshold()">-</button>
+                <input type="range" class="slider" id="powerLowThresholdSlider" min="1" max="2000" step="0.1" value="1" oninput="syncPowerLowThresholdFromSlider()">
+                <button class="step-btn" onclick="incrementPowerLowThreshold()">+</button>
+            </div>
+            <div class="input-group">
+                <input type="number" id="powerLowThresholdInput" min="1" max="2000" step="0.1" value="1" oninput="syncPowerLowThresholdFromInput()">
+                <button id="powerLowThresholdSetBtn" onclick="setPowerLowThreshold()">设置</button>
+            </div>
+        </div>
+        <!-- 低功率持续时间 -->
+        <div class="threshold-item">
+            <div class="threshold-header">
+                <span class="threshold-name">低功率持续时间</span>
+                <span><span class="threshold-value-display" id="lowPowerDurationDisplay">60</span><span class="threshold-unit">秒</span></span>
+            </div>
+            <div class="slider-with-steps">
+                <button class="step-btn" onclick="decrementLowPowerDuration()">-</button>
+                <input type="range" class="slider" id="lowPowerDurationSlider" min="1" max="1200" step="1" value="60" oninput="syncLowPowerDurationFromSlider()">
+                <button class="step-btn" onclick="incrementLowPowerDuration()">+</button>
+            </div>
+            <div class="input-group">
+                <input type="number" id="lowPowerDurationInput" min="1" max="1200" step="1" value="60" oninput="syncLowPowerDurationFromInput()">
+                <button id="lowPowerDurationSetBtn" onclick="setLowPowerDuration()">设置</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========= 历史数据记录卡片 (功能完全保留) ========= -->
+    <div class="card">
+        <div style="font-size: 18px; font-weight: 600; color: #1e3a8a; margin-bottom: 18px;">📊 历史数据记录</div>
+
+        <!-- 时间选择 + 属性切换 + 自定义 -->
+        <div class="history-controls">
+            <!-- 时间按钮组 (24h/7天) -->
+            <div class="btn-group" id="historyTimeGroup">
+                <button class="history-time-btn active" data-days="1">24小时</button>
+                <button class="history-time-btn" data-days="7">7天</button>
+            </div>
+            <!-- 自定义时间 -->
+            <div class="custom-time-group">
+                <input type="datetime-local" id="startTimeInput" class="time-input" placeholder="开始时间">
+                <input type="datetime-local" id="endTimeInput" class="time-input" placeholder="结束时间">
+                <button class="confirm-btn" onclick="queryCustomTimeData()">确定</button>
+            </div>
+            <!-- 属性切换组 (电压/电流/功率/温度/湿度/累计用电) -->
+            <div class="btn-group" id="historyAttrGroup">
+                <button class="history-attr-btn active" data-attr="voltage">电压</button>
+                <button class="history-attr-btn" data-attr="current">电流</button>
+                <button class="history-attr-btn" data-attr="power">功率</button>
+                <button class="history-attr-btn" data-attr="tem">温度</button>
+                <button class="history-attr-btn" data-attr="humi">湿度</button>
+                <button class="history-attr-btn" data-attr="total_energy">累计用电</button>
+            </div>
+        </div>
+
+        <!-- 峰值信息 -->
+        <div class="peak-info" id="peakInfo">
+            <span>📈 峰值:</span> 
+            <span id="peakValue">--</span> 
+            <span id="peakUnit"></span> 
+            出现在 <span id="peakTime">--</span>
+        </div>
+
+        <!-- 图表容器 -->
+        <div id="historyChart"></div>
+        <div id="historyLoading" class="loading" style="display: none;">加载中…</div>
+    </div>
+
+    <!-- 错误提示 -->
+    <div id="errorMsg" class="error-msg"></div>
+
+    <!-- 底部脚注 -->
+    <div class="footer-note">
+        数据来自OneNET · 实时刷新 | 智能插座监测系统 · 卡片紧凑版
+    </div>
+</div>
+
+<!-- 引入原版 index.js (所有功能、事件绑定保持不变) -->
+<script src="js/index.js"></script>
+<!-- 注意：index.js 中依赖的id均已保留，且已包含 window.onload 等初始化逻辑，无需额外脚本 -->
 </body>
 </html>
